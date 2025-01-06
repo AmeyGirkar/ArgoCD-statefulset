@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-example
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: /mnt/data # Adjust this path for your environment
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-example
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: manual
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: example-statefulset
+spec:
+  serviceName: "example-service"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: example
+  template:
+    metadata:
+      labels:
+        app: example
+    spec:
+      containers:
+        - name: app-container
+          image: nginx
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: data-volume
+              mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+    - metadata:
+        name: data-volume
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
